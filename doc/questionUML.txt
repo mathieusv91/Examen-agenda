@@ -1,2 +1,3 @@
 Ecrire ici votre réponse à la question UML.
 
+Le 1er UML est moins détaillé, il manque des spécificités pour les événements répétitifs ou avec terminaison tandis que le 2eme UML est plus détaillé avec justement des sous-classes pour rendre ca plus organisé et maniable.

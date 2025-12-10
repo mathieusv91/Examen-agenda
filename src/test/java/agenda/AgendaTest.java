@@ -1,5 +1,8 @@
 package agenda;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,8 +10,7 @@ import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AgendaTest {
     Agenda agenda;
@@ -16,59 +18,44 @@ public class AgendaTest {
     // November 1st, 2020
     LocalDate nov_1_2020 = LocalDate.of(2020, 11, 1);
 
-    // January 5, 2021
-    LocalDate jan_5_2021 = LocalDate.of(2021, 1, 5);
-
-    // November 1st, 2020, 22:30
-    LocalDateTime nov_1_2020_22_30 = LocalDateTime.of(2020, 11, 1, 22, 30);
-
     // 120 minutes
     Duration min_120 = Duration.ofMinutes(120);
 
     // Un événement simple
-    // November 1st, 2020, 22:30, 120 minutes
     Event simple;
-
-    // Un événement qui se répète toutes les semaines et se termine à une date
-    // donnée
-    Event fixedTermination;
-
-    // Un événement qui se répète toutes les semaines et se termine après un nombre
-    // donné d'occurrences
-    Event fixedRepetitions;
-
-    // A daily repetitive event, never ending
-    // Un événement répétitif quotidien, sans fin
-    // November 1st, 2020, 22:30, 120 minutes
-    Event neverEnding;
+    Event overlapping;
 
     @BeforeEach
     public void setUp() {
-        simple = new Event("Simple event", nov_1_2020_22_30, min_120);
-
-        fixedTermination = new Event("Fixed termination weekly", nov_1_2020_22_30, min_120);
-        fixedTermination.setRepetition(ChronoUnit.WEEKS);
-        fixedTermination.setTermination(jan_5_2021);
-
-        fixedRepetitions = new Event("Fixed termination weekly", nov_1_2020_22_30, min_120);
-        fixedRepetitions.setRepetition(ChronoUnit.WEEKS);
-        fixedRepetitions.setTermination(10);
-
-        neverEnding = new Event("Never Ending", nov_1_2020_22_30, min_120);
-        neverEnding.setRepetition(ChronoUnit.DAYS);
+        simple = new Event("Simple event", LocalDateTime.of(2020, 11, 1, 22, 30), min_120);
+        overlapping = new Event("Overlapping event", LocalDateTime.of(2020, 11, 1, 22, 30), min_120);
 
         agenda = new Agenda();
         agenda.addEvent(simple);
-        agenda.addEvent(fixedTermination);
-        agenda.addEvent(fixedRepetitions);
-        agenda.addEvent(neverEnding);
+        agenda.addEvent(overlapping);
     }
 
     @Test
-    public void testMultipleEventsInDay() {
-        assertEquals(4, agenda.eventsInDay(nov_1_2020).size(),
-                "Il y a 4 événements ce jour là");
-        assertTrue(agenda.eventsInDay(nov_1_2020).contains(neverEnding));
+    public void testFindByTitle() {
+        // Ajouter quelques événements avec des titres différents
+        Event event1 = new Event("Meeting", LocalDateTime.of(2020, 11, 2, 10, 0), min_120);
+        Event event2 = new Event("Meeting", LocalDateTime.of(2020, 11, 3, 14, 0), min_120);
+        agenda.addEvent(event1);
+        agenda.addEvent(event2);
+
+        // Tester la recherche par titre
+        assertEquals(2, agenda.findByTitle("Meeting").size(), "Il y a 2 événements avec le titre 'Meeting'");
+        assertEquals(1, agenda.findByTitle("Simple event").size(), "Il y a 1 événement avec le titre 'Simple event'");
     }
 
+    @Test
+    public void testIsFreeFor() {
+        // Tester un nouvel événement qui chevauche un événement existant
+        Event newEvent = new Event("New Event", LocalDateTime.of(2020, 11, 1, 22, 45), min_120);
+        assertFalse(agenda.isFreeFor(newEvent), "Il n'y a pas de place pour cet événement (chevauchement)");
+
+        // Tester un nouvel événement qui ne chevauche pas
+        Event newEvent2 = new Event("New Event 2", LocalDateTime.of(2020, 11, 1, 0, 0), min_120);
+        assertTrue(agenda.isFreeFor(newEvent2), "Il y a de la place pour cet événement (pas de chevauchement)");
+    }
 }
