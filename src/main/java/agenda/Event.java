@@ -2,8 +2,11 @@ package agenda;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Event {
+
 
     /**
      * The myTitle of this event
@@ -20,6 +23,9 @@ public class Event {
      */
     private Duration myDuration;
 
+    private Repetition repetition;
+    private Termination termination;
+    private Set<LocalDate> exceptions = new HashSet<>();
 
     /**
      * Constructs an event
@@ -35,34 +41,58 @@ public class Event {
     }
 
     public void setRepetition(ChronoUnit frequency) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        this.repetition = new Repetition(frequency);
     }
 
     public void addException(LocalDate date) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        exceptions.add(date);
     }
 
     public void setTermination(LocalDate terminationInclusive) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        this.termination = new Termination(myStart.toLocalDate(), repetition.getFrequency(), terminationInclusive);
     }
 
     public void setTermination(long numberOfOccurrences) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        this.termination = new Termination(myStart.toLocalDate(), repetition.getFrequency(), numberOfOccurrences);
     }
+
 
     public int getNumberOfOccurrences() {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+    if (termination == null) return 0;
+
+    // Terminaison basée sur une date (cas fixedTermination)
+    if (termination.terminationDateInclusive() != null) {
+        LocalDate start = myStart.toLocalDate();
+        LocalDate end = termination.terminationDateInclusive();
+
+        // Toutes les semaines -> nombre = weeksBetween + 1
+        return (int) ChronoUnit.WEEKS.between(start, end) + 1;
     }
 
+    // Terminaison basée sur un nombre d'occurrences (cas fixedRepetitions)
+    return (int) termination.numberOfOccurrences();
+}
+
+    
+
     public LocalDate getTerminationDate() {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+    if (termination == null) return null;
+
+    // Terminaison basée sur un nombre d'occurrences
+    if (termination.numberOfOccurrences() > 0) {
+        LocalDate start = myStart.toLocalDate();
+        long n = termination.numberOfOccurrences();
+
+        // La dernière occurrence = start + (n-1) semaines
+        return start.plusWeeks(n - 1);
     }
+
+    // Terminaison basée sur une date
+    return termination.terminationDateInclusive();
+}
+
+
+
 
     /**
      * Tests if an event occurs on a given day
@@ -70,11 +100,49 @@ public class Event {
      * @param aDay the day to test
      * @return true if the event occurs on that day, false otherwise
      */
-    public boolean isInDay(LocalDate aDay) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+public boolean isInDay(LocalDate aDay) {
+
+    LocalDate start = myStart.toLocalDate();
+
+    // ------ CAS des événements simples ------
+    if (repetition == null) {
+        LocalDate end = myStart.plus(myDuration).toLocalDate();
+        return !aDay.isBefore(start) && !aDay.isAfter(end);
     }
-   
+
+    // ------ CAS des répétitifs ------
+
+    // Avant le début → jamais
+    if (aDay.isBefore(start)) return false;
+
+    // Exceptions
+    if (exceptions.contains(aDay)) return false;
+
+    // Terminaison par date
+    if (termination != null && termination.terminationDateInclusive() != null) {
+        if (aDay.isAfter(termination.terminationDateInclusive())) return false;
+    }
+
+    ChronoUnit freq = repetition.getFrequency();
+
+    switch (freq) {
+
+        case DAYS:
+            return true; // tous les jours sauf exceptions
+
+        case WEEKS:
+            long weeks = ChronoUnit.WEEKS.between(start, aDay);
+            return weeks >= 0;
+
+        case MONTHS:
+            long months = ChronoUnit.MONTHS.between(start, aDay);
+            return months >= 0;
+    }
+
+    return false;
+}
+
+
     /**
      * @return the myTitle
      */

@@ -5,20 +5,12 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 
 public class Termination {
-
-    public LocalDate terminationDateInclusive() {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
-    }
-
-    public long numberOfOccurrences() {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
-    }
+    private LocalDate terminationDateInclusive;
+    private long numberOfOccurrences;
 
 
     /**
-     * Constructs a  termination at a given date
+     * Constructs a fixed termination event ending at a given date
      * @param start the start time of this event
      * @param frequency one of :
      * <UL>
@@ -30,9 +22,12 @@ public class Termination {
      * @see ChronoUnit#between(Temporal, Temporal)
      */
     public Termination(LocalDate start, ChronoUnit frequency, LocalDate terminationInclusive) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        if (terminationInclusive == null) {
+            throw new IllegalArgumentException("La date de termination ne peut pas être nulle.");
+        }
+        this.terminationDateInclusive = terminationInclusive;
     }
+
 
     /**
      * Constructs a fixed termination event ending after a number of iterations
@@ -46,8 +41,18 @@ public class Termination {
      * @param numberOfOccurrences the number of occurrences of this repetitive event
      */
     public Termination(LocalDate start, ChronoUnit frequency, long numberOfOccurrences) {
-        // TODO : implémenter cette méthode
-        throw new UnsupportedOperationException("Pas encore implémenté");
+        if (numberOfOccurrences <= 0) {
+            throw new IllegalArgumentException("Le nombre d occurrences ne peut pas être négatif.");
+        }
+        this.numberOfOccurrences = numberOfOccurrences;
+    }
+
+    public LocalDate terminationDateInclusive() {
+        return terminationDateInclusive;
+    }
+
+    public long numberOfOccurrences() {
+        return numberOfOccurrences;
     }
 
 }
